@@ -1,0 +1,6 @@
+test.db
+.env
+__pycache__/
+*.pyc
+memo.txt
+reset_todo_table.py
