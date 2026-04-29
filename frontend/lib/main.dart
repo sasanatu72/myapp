@@ -16,8 +16,8 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   const baseUrl = String.fromEnvironment(
-    "API_BASE_URL",
-    defaultValue: "http://127.0.0.1:8000",
+    'API_BASE_URL',
+    defaultValue: 'http://127.0.0.1:8000',
   );
 
   final apiClient = ApiClient(
@@ -60,6 +60,113 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  ThemeData _buildTheme(ColorScheme colorScheme) {
+    final inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide(color: colorScheme.outlineVariant),
+    );
+
+    return ThemeData(
+      colorScheme: colorScheme,
+      useMaterial3: true,
+      fontFamilyFallback: const [
+        'Noto Sans JP',
+        'Hiragino Sans',
+        'Yu Gothic',
+        'Meiryo',
+        'sans-serif',
+      ],
+      scaffoldBackgroundColor: colorScheme.surface,
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        titleTextStyle: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        color: colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.35),
+        border: inputBorder,
+        enabledBorder: inputBorder,
+        focusedBorder: inputBorder.copyWith(
+          borderSide: BorderSide(
+            color: colorScheme.primary,
+            width: 1.6,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        selectedItemColor: colorScheme.primary,
+        unselectedItemColor: colorScheme.onSurfaceVariant,
+        selectedIconTheme: IconThemeData(
+          color: colorScheme.primary,
+        ),
+        unselectedIconTheme: IconThemeData(
+          color: colorScheme.onSurfaceVariant,
+        ),
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
+        type: BottomNavigationBarType.fixed,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final preferenceController = context.watch<PreferenceController>();
@@ -78,40 +185,8 @@ class MyApp extends StatelessWidget {
       title: 'Custom Life App',
       debugShowCheckedModeBanner: false,
       themeMode: preferenceController.themeMode,
-      theme: ThemeData(
-        colorScheme: lightColorScheme,
-        useMaterial3: true,
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: lightColorScheme.surface,
-          selectedItemColor: lightColorScheme.onSurface,
-          unselectedItemColor: lightColorScheme.onSurfaceVariant,
-          selectedIconTheme: IconThemeData(
-            color: lightColorScheme.onSurface,
-          ),
-          unselectedIconTheme: IconThemeData(
-            color: lightColorScheme.onSurfaceVariant,
-          ),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-          type: BottomNavigationBarType.fixed,
-        ),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: darkColorScheme,
-        useMaterial3: true,
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: darkColorScheme.surface,
-          selectedItemColor: darkColorScheme.onSurface,
-          unselectedItemColor: darkColorScheme.onSurfaceVariant,
-          selectedIconTheme: IconThemeData(
-            color: darkColorScheme.onSurface,
-          ),
-          unselectedIconTheme: IconThemeData(
-            color: darkColorScheme.onSurfaceVariant,
-          ),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-          type: BottomNavigationBarType.fixed,
-        ),
-      ),
+      theme: _buildTheme(lightColorScheme),
+      darkTheme: _buildTheme(darkColorScheme),
       home: const AuthGate(),
     );
   }

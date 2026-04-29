@@ -8,6 +8,8 @@ class ApiClient {
 
   final String baseUrl;
 
+  static const Duration _requestTimeout = Duration(seconds: 15);
+
   String? _token;
   Future<void> Function()? _onUnauthorized;
 
@@ -38,13 +40,22 @@ class ApiClient {
   }
 
   Future<http.Response> _handleResponse(Future<http.Response> request) async {
-    final response = await request;
+    try {
+      final response = await request.timeout(
+        _requestTimeout,
+        onTimeout: () {
+          throw Exception('サーバーへの接続がタイムアウトしました。バックエンドが起動しているか確認してください。');
+        },
+      );
 
-    if (response.statusCode == 401 && _onUnauthorized != null) {
-      await _onUnauthorized!();
+      if (response.statusCode == 401 && _onUnauthorized != null) {
+        await _onUnauthorized!();
+      }
+
+      return response;
+    } on http.ClientException catch (e) {
+      throw Exception('サーバーに接続できません。API_BASE_URL、CORS設定、バックエンドの起動状態を確認してください。$e');
     }
-
-    return response;
   }
 
   Future<http.Response> get(String path) {

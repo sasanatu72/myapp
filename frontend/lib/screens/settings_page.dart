@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/preference_controller.dart';
 import '../models/user_preference.dart';
+import '../widgets/app_page_container.dart';
+import '../widgets/section_card.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -70,147 +72,178 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            '表示するタブ',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          ...configurableTabs.map((tab) {
-            final isEnabled = _enabledTabs.contains(tab);
-            return SwitchListTile(
-              title: Text(_labelForTab(tab)),
-              value: isEnabled,
-              onChanged: (value) {
-                setState(() {
-                  if (value) {
-                    if (!_enabledTabs.contains(tab)) _enabledTabs.add(tab);
-                    if (!_tabOrder.contains(tab)) _tabOrder.add(tab);
-                    if (_enabledTabs.length == 1) _initialTab = tab;
-                  } else {
-                    if (_enabledTabs.length == 1 && _enabledTabs.contains(tab)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('少なくとも1つのタブは表示してください')),
-                      );
-                      return;
-                    }
-                    _enabledTabs.remove(tab);
-                  }
-                });
-              },
-            );
-          }),
-          const SizedBox(height: 16),
-          const Text(
-            'タブ順',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          ReorderableListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _tabOrder.length,
-            onReorder: (oldIndex, newIndex) {
-              setState(() {
-                if (newIndex > oldIndex) newIndex -= 1;
-                final item = _tabOrder.removeAt(oldIndex);
-                _tabOrder.insert(newIndex, item);
-              });
-            },
-            itemBuilder: (context, index) {
-              final tab = _tabOrder[index];
-              return ListTile(
-                key: ValueKey(tab),
-                title: Text(_labelForTab(tab)),
-                leading: const Icon(Icons.drag_handle),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            '初期タブ',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          DropdownButtonFormField<String>(
-            value: availableInitialTabs.isNotEmpty ? _initialTab : null,
-            items: availableInitialTabs
-                .map(
-                  (tab) => DropdownMenuItem(
-                    value: tab,
-                    child: Text(_labelForTab(tab)),
-                  ),
-                )
-                .toList(),
-            onChanged: availableInitialTabs.isEmpty
-                ? null
-                : (value) {
-                    if (value != null) {
+      appBar: AppBar(title: const Text('設定')),
+      body: AppPageContainer(
+        child: ListView(
+          children: [
+            SectionCard(
+              title: '表示する機能',
+              description: 'ホーム画面の下部タブに表示する機能を選びます。',
+              child: Column(
+                children: configurableTabs.map((tab) {
+                  final isEnabled = _enabledTabs.contains(tab);
+
+                  return SwitchListTile(
+                    secondary: Icon(_iconForTab(tab)),
+                    title: Text(_labelForTab(tab)),
+                    value: isEnabled,
+                    onChanged: (value) {
                       setState(() {
-                        _initialTab = value;
+                        if (value) {
+                          if (!_enabledTabs.contains(tab)) {
+                            _enabledTabs.add(tab);
+                          }
+                          if (!_tabOrder.contains(tab)) {
+                            _tabOrder.add(tab);
+                          }
+                          if (_enabledTabs.length == 1) {
+                            _initialTab = tab;
+                          }
+                        } else {
+                          if (_enabledTabs.length == 1 &&
+                              _enabledTabs.contains(tab)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('少なくとも1つのタブは表示してください'),
+                              ),
+                            );
+                            return;
+                          }
+                          _enabledTabs.remove(tab);
+                        }
                       });
-                    }
-                  },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+                    },
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'テーマ',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          DropdownButtonFormField<String>(
-            value: _themeMode,
-            items: const [
-              DropdownMenuItem(value: 'system', child: Text('System')),
-              DropdownMenuItem(value: 'light', child: Text('Light')),
-              DropdownMenuItem(value: 'dark', child: Text('Dark')),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _themeMode = value;
-                });
-              }
-            },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'タブの並び順',
+              description: 'ドラッグして表示順を変更できます。',
+              child: ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _tabOrder.length,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (newIndex > oldIndex) newIndex -= 1;
+                    final item = _tabOrder.removeAt(oldIndex);
+                    _tabOrder.insert(newIndex, item);
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final tab = _tabOrder[index];
+                  final isEnabled = _enabledTabs.contains(tab);
+
+                  return ListTile(
+                    key: ValueKey(tab),
+                    leading: Icon(
+                      _iconForTab(tab),
+                      color: isEnabled
+                          ? null
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    title: Text(_labelForTab(tab)),
+                    subtitle: Text(isEnabled ? '表示中' : '非表示'),
+                    trailing: ReorderableDragStartListener(
+                      index: index,
+                      child: const Icon(Icons.drag_handle),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _isSaving ? null : _save,
-            child: _isSaving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('設定を保存'),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: () async {
-              context.read<PreferenceController>().clear();
-              await context.read<AuthController>().logout();
-            },
-            icon: const Icon(Icons.logout),
-            label: const Text('ログアウト'),
-          ),
-        ],
+            const SizedBox(height: 16),
+            SectionCard(
+              title: '起動時に開くタブ',
+              description: 'ログイン後に最初に表示する画面を選びます。',
+              child: DropdownButtonFormField<String>(
+                value: availableInitialTabs.isNotEmpty ? _initialTab : null,
+                items: availableInitialTabs
+                    .map(
+                      (tab) => DropdownMenuItem(
+                        value: tab,
+                        child: Text(_labelForTab(tab)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: availableInitialTabs.isEmpty
+                    ? null
+                    : (value) {
+                        if (value != null) {
+                          setState(() {
+                            _initialTab = value;
+                          });
+                        }
+                      },
+              ),
+            ),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: 'テーマ',
+              description: 'アプリ全体の見た目を変更します。',
+              child: DropdownButtonFormField<String>(
+                value: _themeMode,
+                items: const [
+                  DropdownMenuItem(value: 'system', child: Text('システム設定')),
+                  DropdownMenuItem(value: 'light', child: Text('ライト')),
+                  DropdownMenuItem(value: 'dark', child: Text('ダーク')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _themeMode = value;
+                    });
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _isSaving ? null : _save,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save),
+              label: const Text('設定を保存'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _logout,
+              icon: const Icon(Icons.logout),
+              label: const Text('ログアウト'),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  IconData _iconForTab(String tab) {
+    switch (tab) {
+      case 'calendar':
+        return Icons.calendar_month;
+      case 'todo':
+        return Icons.check_box;
+      case 'note':
+        return Icons.note;
+      default:
+        return Icons.help_outline;
+    }
   }
 
   String _labelForTab(String tab) {
     switch (tab) {
       case 'calendar':
-        return 'Calendar';
+        return 'カレンダー';
       case 'todo':
-        return 'Todo';
+        return 'タスク';
       case 'note':
-        return 'Note';
+        return 'ノート';
       default:
         return tab;
     }
@@ -257,5 +290,33 @@ class _SettingsPageState extends State<SettingsPage> {
         });
       }
     }
+  }
+
+  Future<void> _logout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('ログアウトしますか？'),
+          content: const Text('現在のアカウントからログアウトします。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('ログアウト'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout != true) return;
+
+    if (!mounted) return;
+    context.read<PreferenceController>().clear();
+    await context.read<AuthController>().logout();
   }
 }

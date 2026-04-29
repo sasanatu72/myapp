@@ -18,7 +18,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  static const List<String> _defaultTabs = ['calendar', 'todo', 'note', 'settings'];
+  static const List<String> _defaultTabs = [
+    'calendar',
+    'todo',
+    'note',
+    'settings',
+  ];
 
   @override
   void initState() {
@@ -40,7 +45,8 @@ class _HomePageState extends State<HomePage> {
         'settings',
       ];
 
-      final currentTabs = mergedTabOrder.where(mergedEnabledTabs.contains).toList();
+      final currentTabs =
+          mergedTabOrder.where(mergedEnabledTabs.contains).toList();
       final initialIndex = currentTabs.indexOf(pref.initialTab);
 
       if (mounted) {
@@ -87,27 +93,27 @@ class _HomePageState extends State<HomePage> {
       case 'calendar':
         return const BottomNavigationBarItem(
           icon: Icon(Icons.calendar_month),
-          label: 'Calendar',
+          label: 'カレンダー',
         );
       case 'todo':
         return const BottomNavigationBarItem(
           icon: Icon(Icons.check_box),
-          label: 'Todo',
+          label: 'タスク',
         );
       case 'note':
         return const BottomNavigationBarItem(
           icon: Icon(Icons.note),
-          label: 'Note',
+          label: 'ノート',
         );
       case 'settings':
         return const BottomNavigationBarItem(
           icon: Icon(Icons.settings),
-          label: 'Settings',
+          label: '設定',
         );
       default:
         return const BottomNavigationBarItem(
           icon: Icon(Icons.help),
-          label: 'Unknown',
+          label: '不明',
         );
     }
   }
@@ -116,7 +122,8 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final preferenceController = context.watch<PreferenceController>();
 
-    if (preferenceController.isLoading && preferenceController.preference == null) {
+    if (preferenceController.isLoading &&
+        preferenceController.preference == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -127,15 +134,20 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       body: _buildPage(tabs[currentIndex]),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        currentIndex: currentIndex,
-        onTap: (index) {
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) {
           setState(() {
             _selectedIndex = index;
           });
         },
-        items: tabs.map(_buildNavItem).toList(),
+        destinations: tabs.map((tab) {
+          final item = _buildNavItem(tab);
+          return NavigationDestination(
+            icon: item.icon,
+            label: item.label ?? '',
+          );
+        }).toList(),
       ),
     );
   }
