@@ -40,3 +40,4 @@ Thumbs.db
 # ----- Personal memo files -----
 memo.md
 memo.txt
+*.zip
