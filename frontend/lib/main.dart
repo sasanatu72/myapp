@@ -69,6 +69,7 @@ class MyApp extends StatelessWidget {
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
+      fontFamily: 'NotoSansJP',
       fontFamilyFallback: const [
         'Noto Sans JP',
         'Hiragino Sans',
