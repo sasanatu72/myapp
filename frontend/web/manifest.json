@@ -1,11 +1,11 @@
 {
-    "name": "MyApp",
-    "short_name": "MyApp",
+    "name": "Life Custom - カレンダー・Todo・Note管理アプリ",
+    "short_name": "Life Custom",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A life management app with calendar, todo and note features."
+    "description": "日常生活で使用するカレンダー、todoリスト、メモ帳の機能を搭載しており、ボトムメニューで自由にカスタムできるアプリ。随時新機能追加予定!!! Flutter Web、FastAPI、PostgreSQLを用いて開発したフルスタックWebアプリです。"
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
