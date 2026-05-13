@@ -1,13 +1,13 @@
-# Life Custom Frontend
+# Life Custom - Frontend
 
 Life Customのフロントエンドです。  
 Flutter Webで実装し、FastAPIバックエンドとREST APIで通信します。
 
-## Overview
+## 概要
 
 カレンダー、Todo、Noteをまとめて管理する生活管理アプリの画面部分です。
 
-## Main Features
+## 主な機能
 
 - ログイン
 - サインアップ
@@ -18,7 +18,7 @@ Flutter Webで実装し、FastAPIバックエンドとREST APIで通信します
 - ユーザー設定
 - JWTトークンを用いた認証付きAPI通信
 
-## Tech Stack
+## 使用技術
 
 - Flutter
 - Dart
@@ -28,7 +28,7 @@ Flutter Webで実装し、FastAPIバックエンドとREST APIで通信します
 - HTTP package
 - Noto Sans JP
 
-## Project Structure
+## ディレクトリ構成
 
 ```text
 frontend/
@@ -49,23 +49,23 @@ frontend/
 └── README.md
 ```
 
-## Environment
+## 環境
 
 バックエンドAPIのURLは `API_BASE_URL` で指定します。
 
-### Local
+### ローカル
 
 ```bash
 flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
 ```
 
-### Production Build
+### 本番ビルド
 
 ```bash
 flutter build web --release --dart-define=API_BASE_URL=<BACKEND_URL>
 ```
 
-## Local Setup
+## ローカル環境環境
 
 ```bash
 cd frontend
@@ -95,12 +95,12 @@ flutter build web --release --dart-define=API_BASE_URL=<BACKEND_URL>
 build/web
 ```
 
-## Notes
+## 注記
 
 日本語表示のためにNoto Sans JPを使用しています。  
 APIの接続先はビルド時に `--dart-define=API_BASE_URL=...` で指定します。
 
-## Future Improvements
+## 今後の改善予定
 
 - UI/UXの改善
 - スマートフォン表示の最適化
