@@ -1,6 +1,6 @@
-# MyApp Backend
+# Life Custom Backend
 
-MyAppのバックエンドAPIです。  
+Life CustomのバックエンドAPIです。  
 FastAPI / SQLAlchemy / PostgreSQL を用いて実装し、JWT認証によってユーザーごとにデータを管理しています。
 
 ## Overview
