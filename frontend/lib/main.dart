@@ -183,7 +183,7 @@ class MyApp extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: 'Custom Life App',
+      title: 'Life Custom - カレンダー・Todo・Note管理アプリ',
       debugShowCheckedModeBanner: false,
       themeMode: preferenceController.themeMode,
       theme: _buildTheme(lightColorScheme),
