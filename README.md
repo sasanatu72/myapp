@@ -1,4 +1,4 @@
-# MyApp - 生活管理アプリ
+# Life Custom - 生活管理アプリ
 
 カレンダー、Todo、Noteをまとめて管理できる生活管理アプリです。  
 Flutter Web と FastAPI を用いて、認証付きのフルスタックアプリとして開発しました。
