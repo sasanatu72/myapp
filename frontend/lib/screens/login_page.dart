@@ -56,10 +56,11 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.dashboard_customize,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary,
+                  Image.asset(
+                    'assets/icons/leaf_logo_transparent.png',
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 16),
                   Text(
