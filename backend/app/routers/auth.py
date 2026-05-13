@@ -10,7 +10,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    print(user)
     registered_user = register_user(db, user.email, user.password)
 
     if not registered_user:

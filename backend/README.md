@@ -51,7 +51,7 @@ backend/
 
 ## Environment Variables
 
-このプロジェクトでは以下の環境変数を使用します。
+本番環境では以下を必ずRenderの環境変数で設定しています。
 
 ```env
 DATABASE_URL=postgresql://user:password@host:5432/dbname
@@ -60,10 +60,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES=60
 CORS_ORIGINS=https://your-frontend-url.onrender.com
 ```
 
+開発用のデフォルト値はローカル実行用であり、本番では使用していません。
+
 ## Local Setup
 
 ```bash
-git clone https://github.com/sasanatu72/myapp.git
+git clone https://github.com/sasanatu72/myapp
 cd myapp/backend
 pip install -r requirements.txt
 ```
