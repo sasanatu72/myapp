@@ -1,6 +1,6 @@
-# MyApp Frontend
+# Life Custom Frontend
 
-MyAppのフロントエンドです。  
+Life Customのフロントエンドです。  
 Flutter Webで実装し、FastAPIバックエンドとREST APIで通信します。
 
 ## Overview
