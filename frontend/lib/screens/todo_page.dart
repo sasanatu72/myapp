@@ -281,7 +281,14 @@ class _TodoPageState extends State<TodoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('タスク'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.edit_note_outlined),
+            SizedBox(width: 8),
+            Text('ノート'),
+          ],
+        ),
         actions: const [SettingsAction()],
       ),
       body: _buildBody(),
