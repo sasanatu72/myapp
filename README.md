@@ -3,6 +3,65 @@
 カレンダー、Todo、Noteをまとめて管理できる生活管理アプリです。  
 Flutter Web と FastAPI を用いて、認証付きのフルスタックアプリとして開発しました。
 
+<table>
+   <tr>
+      <td>
+         <img src="docs/screenshots/login_page.png" width="380">
+      </td>
+      <td>
+         <img src="docs/screenshots/calendar_page.png" width="380">
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <img src="docs/screenshots/todo_page.png" width="380">
+      </td>
+      <td>
+         <img src="docs/screenshots/note_page.png" width="380">
+      </td>
+   </tr>
+</table>
+
+<details>
+<summary>さらに表示</summary>
+
+<table>
+   <tr>
+      <td>
+         <img src="docs/screenshots/event_create_page.png" width="380">
+      </td>
+      <td>
+         <img src="docs/screenshots/todo_create_page.png" width="380">
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <img src="docs/screenshots/note_create_page.png" width="380">
+      </td>
+      <td>
+         <img src="docs/screenshots/setting_page.png" width="380">
+      </td>
+   </tr>
+</table>
+<table>
+   <tr>
+      <td>
+         <img src="docs/screenshots/ios_login_page.png" width="200">
+      </td>
+      <td>
+         <img src="docs/screenshots/ios_calendar_page.png" width="200">
+      </td>
+      <td>
+         <img src="docs/screenshots/ios_todo_page.png" width="200">
+      </td>
+      <td>
+         <img src="docs/screenshots/ios_note_page.png" width="200">
+      </td>
+   </tr>
+</table>
+
+</details>
+
 ## 開発目的
 
 自分が普段日常生活で使っているさまざまな機能を、一つのアプリに集約させたいという目的で本アプリを開発しました。また、就職活動用のポートフォリオとして、画面実装だけでなく、認証、API設計、DB設計、CRUD処理、マイグレーション、デプロイまで一通り経験することを目的に開発しました。
@@ -28,6 +87,9 @@ Flutter Web と FastAPI を用いて、認証付きのフルスタックアプ�
 
 Email: demo@example.com  
 Password: example
+
+
+
 
 ## 主な機能
 
