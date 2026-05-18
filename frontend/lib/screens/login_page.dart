@@ -50,6 +50,7 @@ class _LoginPageState extends State<LoginPage> {
     return Consumer<AuthController>(
       builder: (context, authController, _) {
         return Scaffold(
+          backgroundColor: Colors.white,
           body: AppPageContainer(
             maxWidth: 440,
             child: SingleChildScrollView(
