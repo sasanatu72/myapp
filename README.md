@@ -62,6 +62,17 @@ Flutter Web と FastAPI を用いて、認証付きのフルスタックアプ�
 
 </details>
 
+## 公開URL
+
+- Frontend: https://myapp-frontend-042i.onrender.com/
+- API Docs: https://myapp-backend-5axl.onrender.com/docs
+
+## デモ用アカウント
+
+Email: demo@example.com  
+Password: example
+
+
 ## 開発目的
 
 自分が普段日常生活で使っているさまざまな機能を、一つのアプリに集約させたいという目的で本アプリを開発しました。また、就職活動用のポートフォリオとして、画面実装だけでなく、認証、API設計、DB設計、CRUD処理、マイグレーション、デプロイまで一通り経験することを目的に開発しました。
@@ -78,15 +89,6 @@ Flutter Web と FastAPI を用いて、認証付きのフルスタックアプ�
 - Renderを用いたWebアプリ公開
 - Flutter WebでのUI実装
 
-## 公開URL
-
-- Frontend: https://myapp-frontend-042i.onrender.com/
-- API Docs: https://myapp-backend-5axl.onrender.com/docs
-
-## デモ用アカウント
-
-Email: demo@example.com  
-Password: example
 
 
 
