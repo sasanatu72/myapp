@@ -153,7 +153,14 @@ class _NotePageState extends State<NotePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ノート'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.edit_note_outlined),
+            SizedBox(width: 8),
+            Text('ノート'),
+          ],
+        ),
         actions: const [SettingsAction()],
       ),
       body: _buildBody(),
