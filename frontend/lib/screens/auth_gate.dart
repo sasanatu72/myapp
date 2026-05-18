@@ -66,7 +66,7 @@ class AuthGate extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Custom Life App',
+                    'Life Custom',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
