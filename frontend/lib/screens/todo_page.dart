@@ -175,7 +175,14 @@ class _TodoPageState extends State<TodoPage> {
           return StatefulBuilder(
             builder: (context, setDialogState) {
               return AlertDialog(
-                title: Text(isEdit ? 'タスク編集' : 'タスク追加'),
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.task_alt_outlined),
+                    const SizedBox(width: 8),
+                    Text(isEdit ? 'タスク編集' : 'タスク追加'),
+                  ],
+                ),
                 content: SizedBox(
                   width: 420,
                   child: Column(

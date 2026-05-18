@@ -137,7 +137,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEdit ? 'イベント編集' : 'イベント作成'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.calendar_month_outlined),
+            const SizedBox(width: 8),
+            Text(widget.isEdit ? 'イベント編集' : 'イベント作成'),
+          ],
+        ),
       ),
       body: AppPageContainer(
         maxWidth: 640,

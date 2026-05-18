@@ -176,7 +176,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             icon: const Icon(Icons.arrow_back),
             onPressed: _finishAndPop,
           ),
-          title: Text(widget.isEdit ? 'ノート編集' : 'ノート作成'),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.edit_note_outlined),
+              const SizedBox(width: 8),
+              Text(widget.isEdit ? 'ノート編集' : 'ノート作成'),
+            ],
+          ),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16),

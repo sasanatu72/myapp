@@ -72,7 +72,16 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('設定')),
+      appBar: AppBar(
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.settings_outlined),
+            SizedBox(width: 8),
+            Text('設定'),
+          ],
+        ),
+      ),
       body: AppPageContainer(
         child: ListView(
           children: [
