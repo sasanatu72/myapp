@@ -284,9 +284,9 @@ class _TodoPageState extends State<TodoPage> {
         title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.edit_note_outlined),
+            Icon(Icons.task_alt_outlined),
             SizedBox(width: 8),
-            Text('ノート'),
+            Text('タスク'),
           ],
         ),
         actions: const [SettingsAction()],
