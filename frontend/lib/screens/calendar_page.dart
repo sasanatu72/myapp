@@ -70,7 +70,14 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('カレンダー'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.calendar_month_outlined),
+            SizedBox(width: 8),
+            Text('カレンダー'),
+          ],
+        ),
         actions: const [SettingsAction()],
       ),
       body: AppPageContainer(
