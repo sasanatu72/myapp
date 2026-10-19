@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/note.dart';
+import '../models/note_content.dart';
 import '../services/note_service.dart';
 import '../utils/date_utils.dart';
 import '../widgets/app_page_container.dart';
@@ -10,11 +11,7 @@ import '../widgets/error_state.dart';
 import '../widgets/settings_action.dart';
 import 'note_editor_page.dart';
 
-enum _NoteSortType {
-  updatedAt,
-  createdAt,
-  title,
-}
+enum _NoteSortType { updatedAt, createdAt, title }
 
 class NotePage extends StatefulWidget {
   const NotePage({super.key});
@@ -80,7 +77,7 @@ class _NotePageState extends State<NotePage> {
     final filteredNotes = _notes.where((note) {
       if (query.isEmpty) return true;
       return note.title.toLowerCase().contains(query) ||
-          note.content.toLowerCase().contains(query);
+          NoteContent.decode(note.content).text.toLowerCase().contains(query);
     }).toList();
 
     filteredNotes.sort(_compareNotes);
@@ -139,9 +136,7 @@ class _NotePageState extends State<NotePage> {
   Future<void> _openEditor({Note? note}) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (_) => NoteEditorPage(note: note),
-      ),
+      MaterialPageRoute(builder: (_) => NoteEditorPage(note: note)),
     );
 
     if (result == true) {
@@ -178,10 +173,7 @@ class _NotePageState extends State<NotePage> {
 
     if (_errorMessage != null) {
       return AppPageContainer(
-        child: ErrorState(
-          message: _errorMessage!,
-          onRetry: _loadNotes,
-        ),
+        child: ErrorState(message: _errorMessage!, onRetry: _loadNotes),
       );
     }
 
@@ -233,8 +225,8 @@ class _NotePageState extends State<NotePage> {
                           Icon(
                             isSelected
                                 ? (_sortAscending
-                                    ? Icons.arrow_upward
-                                    : Icons.arrow_downward)
+                                      ? Icons.arrow_upward
+                                      : Icons.arrow_downward)
                                 : Icons.sort,
                             size: 18,
                           ),
@@ -282,7 +274,7 @@ class _NotePageState extends State<NotePage> {
                   )
                 : ListView.separated(
                     itemCount: visibleNotes.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, index) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final note = visibleNotes[index];
                       return _NoteCard(
@@ -322,14 +314,13 @@ class _NotePageState extends State<NotePage> {
     if (shouldDelete != true) return;
 
     try {
+      if (!mounted) return;
       await context.read<NoteService>().deleteNote(note.id);
       await _loadNotes();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     }
   }
@@ -348,7 +339,8 @@ class _NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final preview = note.content.trim().isEmpty ? '本文なし' : note.content.trim();
+    final text = NoteContent.decode(note.content).text.trim();
+    final preview = text.isEmpty ? '本文なし' : text;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
@@ -367,8 +359,8 @@ class _NoteCard extends StatelessWidget {
                     Text(
                       note.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -378,15 +370,15 @@ class _NoteCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       '更新: ${formatDateTime(note.updatedAt)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

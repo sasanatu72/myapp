@@ -30,7 +30,7 @@ class _TodoPageState extends State<TodoPage> {
   bool _isLoading = true;
   String? _errorMessage;
 
-  _TodoSortType _sortType = _TodoSortType.incomplete;
+  _TodoSortType _sortType = _TodoSortType.dueDate;
   bool _sortAscending = true;
 
   @override
@@ -521,7 +521,9 @@ class _TodoCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w700,
-          color: todo.isDone ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+          color: todo.isDone
+              ? colorScheme.onSurface.withValues(alpha: 0.42)
+              : colorScheme.onSurface,
         );
 
     return Card(

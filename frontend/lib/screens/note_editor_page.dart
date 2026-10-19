@@ -1,342 +1,483 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../controllers/note_workspace_controller.dart';
 import '../models/note.dart';
+import '../models/note_content.dart';
 import '../services/note_service.dart';
-import '../widgets/app_page_container.dart';
+import '../utils/date_utils.dart';
+import '../widgets/error_state.dart';
+import '../widgets/note_document_editor.dart';
+import 'settings_page.dart';
+
+enum _NoteSort { updated, created, title }
 
 class NoteEditorPage extends StatefulWidget {
-  const NoteEditorPage({
-    super.key,
-    this.note,
-  });
+  const NoteEditorPage({super.key, this.note});
 
   final Note? note;
-
-  bool get isEdit => note != null;
 
   @override
   State<NoteEditorPage> createState() => _NoteEditorPageState();
 }
 
 class _NoteEditorPageState extends State<NoteEditorPage> {
-  static const Duration _autoSaveDelay = Duration(milliseconds: 900);
-
-  late final TextEditingController _titleController;
-  late final TextEditingController _contentController;
-
-  Timer? _autoSaveTimer;
-  int? _noteId;
-
-  bool _isSaving = false;
-  bool _hasSavedChanges = false;
-  bool _isPopping = false;
-  String? _saveErrorMessage;
-
-  late String _lastSavedTitle;
-  late String _lastSavedContent;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _search = TextEditingController();
+  late final NoteWorkspaceController _workspace;
+  _NoteSort _sort = _NoteSort.updated;
+  bool _ascending = false;
+  bool _overlayOpen = false;
+  bool _drawerOpen = false;
+  bool _canPop = false;
+  bool _returning = false;
 
   @override
   void initState() {
     super.initState();
-
-    _noteId = widget.note?.id;
-    _lastSavedTitle = widget.note?.title ?? '';
-    _lastSavedContent = widget.note?.content ?? '';
-
-    _titleController = TextEditingController(text: _lastSavedTitle);
-    _contentController = TextEditingController(text: _lastSavedContent);
-
-    _titleController.addListener(_scheduleAutoSave);
-    _contentController.addListener(_scheduleAutoSave);
+    _workspace = NoteWorkspaceController(context.read<NoteService>());
+    _search.addListener(() => setState(() {}));
+    Future.microtask(_loadWorkspace);
   }
+
+  Future<void> _loadWorkspace() =>
+      _workspace.load(initialNote: widget.note, createNew: widget.note == null);
 
   @override
   void dispose() {
-    _autoSaveTimer?.cancel();
-    _titleController.dispose();
-    _contentController.dispose();
+    _search.dispose();
+    _workspace.dispose();
     super.dispose();
   }
 
-  bool get _hasUnsavedChanges {
-    return _normalizedTitle != _lastSavedTitle ||
-        _contentController.text != _lastSavedContent;
-  }
-
-  String get _normalizedTitle {
-    final title = _titleController.text.trim();
-    return title.isEmpty ? '無題' : title;
-  }
-
-  bool get _isCompletelyEmpty {
-    return _titleController.text.trim().isEmpty &&
-        _contentController.text.trim().isEmpty;
-  }
-
-  void _scheduleAutoSave() {
-    _autoSaveTimer?.cancel();
-
-    if (_isPopping) return;
-
-    setState(() {
-      _saveErrorMessage = null;
-    });
-
-    _autoSaveTimer = Timer(_autoSaveDelay, () {
-      _saveNow();
-    });
-  }
-
-  Future<bool> _saveNow() async {
-    if (_isSaving) return false;
-    if (!_hasUnsavedChanges) return true;
-
-    // 新規ノートでタイトルも本文も空なら、空のノートは作らない。
-    if (_noteId == null && _isCompletelyEmpty) return true;
-
-    setState(() {
-      _isSaving = true;
-      _saveErrorMessage = null;
-    });
-
-    try {
-      final service = context.read<NoteService>();
-      final title = _normalizedTitle;
-      final content = _contentController.text;
-
-      final savedNote = _noteId == null
-          ? await service.createNote(
-              title: title,
-              content: content,
-            )
-          : await service.updateNote(
-              id: _noteId!,
-              title: title,
-              content: content,
-            );
-
-      if (!mounted) return false;
-
-      setState(() {
-        _noteId = savedNote.id;
-        _lastSavedTitle = savedNote.title;
-        _lastSavedContent = savedNote.content;
-        _hasSavedChanges = true;
-        _isSaving = false;
-      });
-
-      return true;
-    } catch (e) {
-      if (!mounted) return false;
-
-      setState(() {
-        _saveErrorMessage = e.toString().replaceFirst('Exception: ', '');
-        _isSaving = false;
-      });
-
-      return false;
+  Future<bool> prepareToLeave() async {
+    final saved = await _workspace.flush();
+    if (!saved && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_workspace.error ?? '保存が完了するまでお待ちください。')),
+      );
     }
+    return saved;
   }
 
-  Future<void> _finishAndPop() async {
-    if (_isPopping) return;
-
-    _isPopping = true;
-    _autoSaveTimer?.cancel();
-
-    final canPop = await _saveNow();
-
-    if (!mounted) return;
-
-    if (!canPop) {
-      setState(() {
-        _isPopping = false;
-      });
+  Future<void> _returnToList() async {
+    if (_returning) return;
+    _returning = true;
+    if (!await prepareToLeave() || !mounted) {
+      _returning = false;
       return;
     }
+    setState(() => _canPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop(true);
+    });
+  }
 
-    Navigator.pop(context, _hasSavedChanges);
+  Future<void> _select(Note? note) async {
+    final selected = await _workspace.select(note);
+    if (selected &&
+        mounted &&
+        _scaffoldKey.currentState?.isDrawerOpen == true) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _settings() async {
+    if (!await prepareToLeave() || !mounted) return;
+    setState(() => _overlayOpen = true);
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const SettingsPage()));
+    if (mounted) setState(() => _overlayOpen = false);
+  }
+
+  Future<void> _delete() async {
+    // A platform view must not receive pointer input behind a Flutter dialog.
+    setState(() => _overlayOpen = true);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ノートを削除しますか？'),
+        content: Text(
+          '「${_workspace.title.trim().isEmpty ? '無題' : _workspace.title}」を削除します。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _overlayOpen = false);
+    if (confirmed == true) await _workspace.deleteSelected();
+  }
+
+  List<Note> get _visibleNotes {
+    final query = _search.text.trim().toLowerCase();
+    final notes = _workspace.notes.where((note) {
+      final title = note.id == _workspace.selectedId
+          ? _workspace.title
+          : note.title;
+      final content = note.id == _workspace.selectedId
+          ? _workspace.content
+          : note.content;
+      return title.toLowerCase().contains(query) ||
+          NoteContent.decode(content).text.toLowerCase().contains(query);
+    }).toList();
+    notes.sort((a, b) {
+      final compare = switch (_sort) {
+        _NoteSort.updated => a.updatedAt.compareTo(b.updatedAt),
+        _NoteSort.created => a.createdAt.compareTo(b.createdAt),
+        _NoteSort.title => a.title.toLowerCase().compareTo(
+          b.title.toLowerCase(),
+        ),
+      };
+      if (compare == 0) return b.id.compareTo(a.id);
+      return _ascending ? compare : -compare;
+    });
+    return notes;
   }
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return WillPopScope(
-      onWillPop: () async {
-        await _finishAndPop();
-        return false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _finishAndPop,
-          ),
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.edit_note_outlined),
-              const SizedBox(width: 8),
-              Text(widget.isEdit ? 'ノート編集' : 'ノート作成'),
-            ],
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: _SaveStatusLabel(
-                  isSaving: _isSaving,
-                  hasUnsavedChanges: _hasUnsavedChanges,
-                  hasError: _saveErrorMessage != null,
-                ),
+  Widget build(BuildContext context) => PopScope<bool>(
+    canPop: _canPop,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) _returnToList();
+    },
+    child: AnimatedBuilder(
+      animation: _workspace,
+      builder: (context, _) => LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 760;
+          final colors = Theme.of(context).colorScheme;
+          return Scaffold(
+            key: _scaffoldKey,
+            onDrawerChanged: (open) => setState(() => _drawerOpen = open),
+            appBar: AppBar(
+              leading: IconButton(
+                tooltip: '一覧に戻る',
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _returnToList,
               ),
-            ),
-          ],
-        ),
-        body: AppPageContainer(
-          maxWidth: 720,
-          child: Column(
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
+              title: const Text('ノート'),
+              actions: [
+                if (!wide)
+                  IconButton(
+                    tooltip: 'ノート一覧',
+                    icon: const Icon(Icons.menu_book_outlined),
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                   ),
-                  child: TextField(
-                    controller: _titleController,
-                    textInputAction: TextInputAction.next,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                    decoration: const InputDecoration(
-                      hintText: 'タイトル',
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
+                _saveStatus(context, compact: !wide),
+                IconButton(
+                  tooltip: '今すぐ保存',
+                  onPressed: _workspace.isSaving || !_workspace.isDirty
+                      ? null
+                      : prepareToLeave,
+                  icon: const Icon(Icons.cloud_upload_outlined),
                 ),
-              ),
-              if (_saveErrorMessage != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 18,
-                      color: colorScheme.error,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        _saveErrorMessage!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.error,
-                            ),
-                      ),
-                    ),
-                  ],
+                IconButton(
+                  tooltip: 'ノートを削除',
+                  onPressed:
+                      _workspace.selectedId == null || _workspace.isSwitching
+                      ? null
+                      : _delete,
+                  icon: const Icon(Icons.delete_outline),
                 ),
+                IconButton(
+                  tooltip: '設定',
+                  onPressed: _settings,
+                  icon: const Icon(Icons.settings_outlined),
+                ),
+                const SizedBox(width: 8),
               ],
-              const SizedBox(height: 14),
-              Expanded(
-                child: TextField(
-                  controller: _contentController,
-                  expands: true,
-                  minLines: null,
-                  maxLines: null,
-                  keyboardType: TextInputType.multiline,
-                  textInputAction: TextInputAction.newline,
-                  textAlignVertical: TextAlignVertical.top,
-                  scrollPadding: const EdgeInsets.only(
-                    left: 24,
-                    right: 24,
-                    top: 80,
-                    bottom: 160,
-                  ),
-                  cursorWidth: 2,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    height: 1.8,
-                    fontSize: 16,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: '本文を入力',
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    alignLabelWithHint: false,
-                    contentPadding: EdgeInsets.fromLTRB(4, 12, 4, 120),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+            drawer: wide ? null : Drawer(child: SafeArea(child: _sidebar())),
+            body: SafeArea(
+              child: _workspace.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _workspace.error != null && _workspace.editorVersion == 0
+                  ? ErrorState(
+                      message: _workspace.error!,
+                      onRetry: _loadWorkspace,
+                    )
+                  : Row(
+                      children: [
+                        if (wide) ...[
+                          SizedBox(width: 280, child: _sidebar()),
+                          VerticalDivider(
+                            width: 1,
+                            thickness: 1,
+                            color: colors.outlineVariant,
+                          ),
+                        ],
+                        Expanded(
+                          child: Column(
+                            children: [
+                              if (_workspace.error != null) _saveError(context),
+                              Expanded(
+                                child: NoteDocumentEditor(
+                                  key: ValueKey(_workspace.editorVersion),
+                                  title: _workspace.title,
+                                  content: _workspace.content,
+                                  enabled:
+                                      !_overlayOpen &&
+                                      !_drawerOpen &&
+                                      !_workspace.isSwitching,
+                                  hasUnsavedChanges:
+                                      _workspace.isDirty || _workspace.isSaving,
+                                  onChanged: (title, content, composing) =>
+                                      _workspace.change(
+                                        title,
+                                        content,
+                                        composing: composing,
+                                      ),
+                                ),
+                              ),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: colors.outlineVariant,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  '${NoteContent.decode(_workspace.content).text.characters.length} 文字 · 自動保存',
+                                  textAlign: TextAlign.right,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: colors.onSurfaceVariant,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+
+  Widget _saveStatus(BuildContext context, {bool compact = false}) {
+    final label = _workspace.isSaving
+        ? '保存中…'
+        : _workspace.error != null
+        ? '保存を確認'
+        : _workspace.isComposing
+        ? '変換中'
+        : _workspace.isDirty
+        ? '未保存'
+        : '保存済み';
+    return Tooltip(
+      message: label,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_workspace.isSaving)
+            const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Icon(
+              _workspace.isDirty
+                  ? Icons.cloud_queue
+                  : Icons.cloud_done_outlined,
+              size: 17,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          if (!compact) ...[
+            const SizedBox(width: 6),
+            Text(label, style: Theme.of(context).textTheme.labelMedium),
+          ],
+          const SizedBox(width: 4),
+        ],
       ),
     );
   }
-}
 
-class _SaveStatusLabel extends StatelessWidget {
-  const _SaveStatusLabel({
-    required this.isSaving,
-    required this.hasUnsavedChanges,
-    required this.hasError,
-  });
+  Widget _saveError(BuildContext context) => Container(
+    color: Theme.of(context).colorScheme.errorContainer,
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Row(
+      children: [
+        const Icon(Icons.error_outline, size: 18),
+        const SizedBox(width: 8),
+        Expanded(child: Text(_workspace.error!)),
+        TextButton(onPressed: prepareToLeave, child: const Text('再試行')),
+      ],
+    ),
+  );
 
-  final bool isSaving;
-  final bool hasUnsavedChanges;
-  final bool hasError;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    if (hasError) {
-      return Text(
-        '保存失敗',
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: colorScheme.error,
-              fontWeight: FontWeight.w600,
-            ),
-      );
-    }
-
-    if (isSaving) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
+  Widget _sidebar() {
+    final colors = Theme.of(context).colorScheme;
+    final notes = _visibleNotes;
+    return ColoredBox(
+      color: colors.surface,
+      child: Column(
         children: [
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(strokeWidth: 2),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: FilledButton.icon(
+              onPressed: _workspace.isSwitching ? null : () => _select(null),
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text('新しいノート'),
+            ),
           ),
-          const SizedBox(width: 6),
-          Text(
-            '保存中',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _search,
+              decoration: InputDecoration(
+                hintText: 'ノートを検索',
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _search.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: '検索をクリア',
+                        onPressed: _search.clear,
+                        icon: const Icon(Icons.close, size: 18),
+                      ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${_workspace.notes.length} 件のノート',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                PopupMenuButton<_NoteSort>(
+                  tooltip: '並び替え',
+                  onSelected: (value) => setState(() {
+                    _ascending = _sort == value
+                        ? !_ascending
+                        : value == _NoteSort.title;
+                    _sort = value;
+                  }),
+                  itemBuilder: (_) => [
+                    for (final item in {
+                      _NoteSort.updated: '更新順',
+                      _NoteSort.created: '作成順',
+                      _NoteSort.title: 'タイトル順',
+                    }.entries)
+                      PopupMenuItem(
+                        value: item.key,
+                        child: Row(
+                          children: [
+                            Icon(
+                              _sort == item.key
+                                  ? (_ascending
+                                        ? Icons.arrow_upward
+                                        : Icons.arrow_downward)
+                                  : Icons.sort,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(item.value),
+                          ],
+                        ),
+                      ),
+                  ],
+                  icon: const Icon(Icons.sort, size: 20),
+                ),
+              ],
+            ),
+          ),
+          if (_workspace.selectedId == null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: ListTile(
+                selected: true,
+                selectedTileColor: colors.primaryContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                leading: const Icon(Icons.edit_note),
+                title: Text(
+                  _workspace.title.trim().isEmpty ? '新しいノート' : _workspace.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: const Text('編集中の下書き'),
+              ),
+            ),
+          Expanded(
+            child: notes.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      _search.text.isEmpty
+                          ? 'メモやアイデアを書き始めましょう。'
+                          : '一致するノートがありません。',
+                      style: TextStyle(color: colors.onSurfaceVariant),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: notes.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 4),
+                    itemBuilder: (context, index) {
+                      final note = notes[index];
+                      final selected = note.id == _workspace.selectedId;
+                      final title = selected ? _workspace.title : note.title;
+                      final text = NoteContent.decode(
+                        selected ? _workspace.content : note.content,
+                      ).text;
+                      return ListTile(
+                        selected: selected,
+                        selectedTileColor: colors.primaryContainer,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        onTap: _workspace.isSwitching
+                            ? null
+                            : () => _select(note),
+                        title: Text(
+                          title.trim().isEmpty ? '無題' : title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          '${text.trim().isEmpty ? '本文なし' : text.replaceAll('\n', ' ')}\n'
+                          '${formatDateTime(note.updatedAt)}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        isThreeLine: true,
+                      );
+                    },
+                  ),
           ),
         ],
-      );
-    }
-
-    return Text(
-      hasUnsavedChanges ? '未保存' : '保存済み',
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
-          ),
+      ),
     );
   }
 }

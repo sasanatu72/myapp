@@ -17,16 +17,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  static const List<String> _supportedTabs = [
-    'calendar',
-    'todo',
-    'note',
-  ];
+  static const List<String> _supportedTabs = ['calendar', 'todo', 'note'];
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() async {
+      if (!mounted) return;
       final controller = context.read<PreferenceController>();
       await controller.loadPreferences();
 
@@ -54,7 +51,9 @@ class _HomePageState extends State<HomePage> {
     }
 
     final orderedTabs = pref.tabOrder
-        .where((tab) => _supportedTabs.contains(tab) && enabledTabs.contains(tab))
+        .where(
+          (tab) => _supportedTabs.contains(tab) && enabledTabs.contains(tab),
+        )
         .toList();
 
     for (final tab in _supportedTabs) {
@@ -111,10 +110,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final preferenceController = context.watch<PreferenceController>();
 
-    if (preferenceController.isLoading && preferenceController.preference == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+    if (preferenceController.isLoading &&
+        preferenceController.preference == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final tabs = _resolvedTabs(preferenceController.preference);

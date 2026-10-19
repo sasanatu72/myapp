@@ -17,6 +17,7 @@ router = APIRouter(
 )
 
 
+@router.post("", response_model=EventResponse, include_in_schema=False)
 @router.post("/", response_model=EventResponse)
 def create(
     event: EventCreate,
@@ -26,6 +27,7 @@ def create(
     return create_event(db, event, current_user.id)
 
 
+@router.get("", response_model=list[EventResponse], include_in_schema=False)
 @router.get("/", response_model=list[EventResponse])
 def read_events(
     db: Session = Depends(get_db),

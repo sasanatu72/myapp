@@ -318,12 +318,12 @@ class _MonthCalendar extends StatelessWidget {
   static const double _dayNumberHeight = 24;
   static const double _eventBarHeight = 17;
   static const double _eventBarGap = 3;
-  static const List<String> _weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  static const List<String> _weekdays = ['月', '火', '水', '木', '金', '土', '日'];
 
   DateTime get _firstVisibleDay {
     final firstOfMonth = DateTime(focusedMonth.year, focusedMonth.month, 1);
-    final daysFromSunday = firstOfMonth.weekday % 7;
-    return firstOfMonth.subtract(Duration(days: daysFromSunday));
+    final daysFromMonday = firstOfMonth.weekday - DateTime.monday;
+    return firstOfMonth.subtract(Duration(days: daysFromMonday));
   }
 
   @override
@@ -382,7 +382,11 @@ class _MonthCalendar extends StatelessWidget {
                         child: Text(
                           weekday,
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
+                                color: _weekendColor(
+                                      colorScheme,
+                                      _weekdays.indexOf(weekday) + DateTime.monday,
+                                    ) ??
+                                    colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
@@ -580,6 +584,17 @@ class _CalendarGridPainter extends CustomPainter {
   }
 }
 
+Color? _weekendColor(ColorScheme colorScheme, int weekday) {
+  final isDark = colorScheme.brightness == Brightness.dark;
+  if (weekday == DateTime.saturday) {
+    return isDark ? Colors.blue.shade300 : Colors.blue.shade700;
+  }
+  if (weekday == DateTime.sunday) {
+    return isDark ? Colors.red.shade300 : Colors.red.shade700;
+  }
+  return null;
+}
+
 class _DayTapAndNumber extends StatelessWidget {
   const _DayTapAndNumber({
     required this.day,
@@ -607,6 +622,8 @@ class _DayTapAndNumber extends StatelessWidget {
     final isOutsideMonth = day.month != focusedMonth.month;
     final isToday = isSameDate(day, DateTime.now());
     final isSelected = isSameDate(day, selectedDay);
+    final dayColor = _weekendColor(colorScheme, day.weekday) ??
+        colorScheme.onSurface;
 
     return Positioned(
       top: row * rowHeight,
@@ -637,8 +654,8 @@ class _DayTapAndNumber extends StatelessWidget {
                   color: isSelected
                       ? colorScheme.onPrimary
                       : isOutsideMonth
-                          ? colorScheme.onSurfaceVariant.withOpacity(0.42)
-                          : colorScheme.onSurface,
+                          ? dayColor.withValues(alpha: 0.42)
+                          : dayColor,
                   fontSize: 12,
                   fontWeight: isToday || isSelected ? FontWeight.w800 : FontWeight.w600,
                 ),
