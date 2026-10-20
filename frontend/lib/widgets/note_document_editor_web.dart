@@ -122,10 +122,10 @@ class _NoteDocumentEditorState extends State<NoteDocumentEditor> {
         border-radius:0;background:transparent;color:var(--ink);font:inherit;
         font-size:22px;font-weight:700;line-height:1.5; }
       .life-note-editor .note-body { flex:1 0 auto;min-height:320px;outline:none;font-size:14px;
-        line-height:1.75;overflow-wrap:anywhere;white-space:pre-wrap;caret-color:var(--ink); }
+        line-height:1.3;overflow-wrap:anywhere;white-space:pre-wrap;caret-color:var(--ink); }
       .life-note-editor .note-body:empty:before { content:attr(data-placeholder);
         color:var(--muted);pointer-events:none; }
-      .life-note-editor .note-body p,.life-note-editor .note-body div { margin:0 0 6px; }
+      .life-note-editor .note-body p,.life-note-editor .note-body div { margin:0 0 3px; }
       .life-note-editor .note-body h1 { font-size:24px;line-height:1.5;margin:24px 0 12px; }
       .life-note-editor .note-body h2 { font-size:20px;line-height:1.6;margin:20px 0 10px; }
       .life-note-editor .note-body h3 { font-size:17px;margin:16px 0 8px; }

@@ -76,7 +76,7 @@ class _NoteDocumentEditorState extends State<NoteDocumentEditor> {
             minLines: null,
             maxLines: null,
             textAlignVertical: TextAlignVertical.top,
-            style: const TextStyle(fontSize: 14, height: 1.75),
+            style: const TextStyle(fontSize: 14, height: 1.3),
             scrollPadding: const EdgeInsets.all(20),
             decoration: const InputDecoration(hintText: '本文を入力'),
           ),
